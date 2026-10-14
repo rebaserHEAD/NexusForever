@@ -246,7 +246,14 @@ namespace NexusForever.Game.Entity
 
         public IVendorInfo SelectedVendorInfo { get; set; } // TODO unset this when too far away from vendor
 
+        /// <summary>
+        /// Returns if a save of <see cref="IPlayer"/> is in progress or saves are held.
+        /// </summary>
+        public bool IsSaving => saveInProgress || saveHolds > 0u;
+
         private bool forceSave;
+        private bool saveInProgress;
+        private uint saveHolds;
         private UpdateTimer saveTimer = new(SaveDuration);
         private PlayerSaveMask saveMask;
 
@@ -435,15 +442,26 @@ namespace NexusForever.Game.Entity
         /// <remarks>
         /// This is a delayed save, <see cref="AuthContext"/> changes are saved first followed by <see cref="CharacterContext"/> changes.
         /// Packets for session will not be handled until save is complete.
+        /// A save requested while another is in progress or saves are held runs once that save completes or the hold is released.
         /// </remarks>
         public void Save(Action callback = null)
         {
+            // two saves in flight at once snapshot at different times and can commit in either order, writing older absolute values over newer ones
+            if (IsSaving)
+            {
+                Session.Events.EnqueueEvent(new PredicateEvent(() => !IsSaving, () => Save(callback)));
+                return;
+            }
+
+            saveInProgress = true;
+
             Session.Events.EnqueueEvent(new TaskEvent(DatabaseManager.Instance.GetDatabase<AuthDatabase>().Save(Save),
             () =>
             {
                 Session.Events.EnqueueEvent(new TaskEvent(DatabaseManager.Instance.GetDatabase<CharacterDatabase>().Save(Save),
                 () =>
                 {
+                    saveInProgress = false;
                     callback?.Invoke();
                     Session.CanProcessIncomingPackets = true;
                     saveTimer.Resume();
@@ -467,6 +485,38 @@ namespace NexusForever.Game.Entity
         {
             await DatabaseManager.Instance.GetDatabase<AuthDatabase>().Save(Save);
             await DatabaseManager.Instance.GetDatabase<CharacterDatabase>().Save(Save);
+        }
+
+        /// <summary>
+        /// Hold saves of <see cref="IPlayer"/> until the returned handle is disposed.
+        /// </summary>
+        /// <remarks>
+        /// Can't be taken while a save is in progress, check <see cref="IsSaving"/> first.
+        /// While held, packets for session are not handled and the save timer is paused.
+        /// </remarks>
+        public IDisposable HoldSave()
+        {
+            if (saveInProgress)
+                throw new InvalidOperationException($"Can't hold saves for player {CharacterId} while a save is in progress!");
+
+            saveHolds++;
+
+            Session.CanProcessIncomingPackets = false;
+
+            // paused rather than reset, played time is calculated from the time remaining on the timer
+            saveTimer.Pause();
+
+            return new SaveHold(this);
+        }
+
+        private void ReleaseSaveHold()
+        {
+            saveHolds--;
+            if (saveHolds != 0u)
+                return;
+
+            Session.CanProcessIncomingPackets = true;
+            saveTimer.Resume();
         }
 
         /// <summary>
@@ -1502,6 +1552,32 @@ namespace NexusForever.Game.Entity
         {
             DeathState = null;
             RemoveControlUnit();
+        }
+
+        private class SaveHold : IDisposable
+        {
+            private readonly Player player;
+            private bool released;
+
+            /// <summary>
+            /// Create a new <see cref="SaveHold"/> for the supplied <see cref="Player"/>.
+            /// </summary>
+            public SaveHold(Player player)
+            {
+                this.player = player;
+            }
+
+            /// <summary>
+            /// Release the hold, the last hold released lets saves of the <see cref="Player"/> run again.
+            /// </summary>
+            public void Dispose()
+            {
+                if (released)
+                    return;
+
+                released = true;
+                player.ReleaseSaveHold();
+            }
         }
     }
 }
