@@ -96,13 +96,28 @@ namespace NexusForever.Game.Abstract.Entity
         IVendorInfo SelectedVendorInfo { get; set; }
 
         /// <summary>
+        /// Returns if a save of <see cref="IPlayer"/> is in progress or saves are held.
+        /// </summary>
+        bool IsSaving { get; }
+
+        /// <summary>
         /// Save <see cref="IPlayer"/> to database, invoke supplied <see cref="Action"/> once save is complete.
         /// </summary>
         /// <remarks>
         /// This is a delayed save, <see cref="AuthContext"/> changes are saved first followed by <see cref="CharacterContext"/> changes.
         /// Packets for session will not be handled until save is complete.
+        /// A save requested while another is in progress or saves are held runs once that save completes or the hold is released.
         /// </remarks>
         void Save(Action callback = null);
+
+        /// <summary>
+        /// Hold saves of <see cref="IPlayer"/> until the returned handle is disposed.
+        /// </summary>
+        /// <remarks>
+        /// Can't be taken while a save is in progress, check <see cref="IsSaving"/> first.
+        /// While held, packets for session are not handled and the save timer is paused.
+        /// </remarks>
+        IDisposable HoldSave();
 
         /// <summary>
         /// Save <see cref="IPlayer"/> to database.
