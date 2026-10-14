@@ -10,6 +10,7 @@ using NexusForever.Game.Abstract.Chat.Format;
 using NexusForever.Game.Abstract.Matching.Match;
 using NexusForever.Game.Abstract.Matching.Queue;
 using NexusForever.Game.Abstract.PublicEvent;
+using NexusForever.Game.Abstract.Trade;
 using NexusForever.Game.Achievement;
 using NexusForever.Game.Character;
 using NexusForever.Game.Cinematic;
@@ -51,6 +52,7 @@ namespace NexusForever.WorldServer.Service
         private readonly IMessageManager messageManager;
         private readonly IMatchingManager matchingManager;
         private readonly IMatchManager matchManager;
+        private readonly ITradeManager tradeManager;
         private readonly IPublicEventTemplateManager publicEventManager;
         private readonly IChatFormatManager chatFormatManager;
         private readonly IWorldManager worldManager;
@@ -64,6 +66,7 @@ namespace NexusForever.WorldServer.Service
             IMessageManager messageManager,
             IMatchingManager matchingManager,
             IMatchManager matchManager,
+            ITradeManager tradeManager,
             IPublicEventTemplateManager publicEventManager,
             IChatFormatManager chatFormatManager,
             IWorldManager worldManager)
@@ -78,6 +81,7 @@ namespace NexusForever.WorldServer.Service
             this.messageManager     = messageManager;
             this.matchingManager    = matchingManager;
             this.matchManager       = matchManager;
+            this.tradeManager       = tradeManager;
             this.publicEventManager = publicEventManager;
             this.chatFormatManager  = chatFormatManager;
             this.worldManager       = worldManager;
@@ -157,6 +161,7 @@ namespace NexusForever.WorldServer.Service
                 loginQueueManager.Update(lastTick);
                 matchingManager.Update(lastTick);
                 matchManager.Update(lastTick);
+                tradeManager.Update(lastTick);
 
                 scriptManager.Update(lastTick);
 

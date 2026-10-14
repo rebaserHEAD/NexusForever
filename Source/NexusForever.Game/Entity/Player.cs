@@ -17,6 +17,7 @@ using NexusForever.Game.Abstract.Map.Lock;
 using NexusForever.Game.Abstract.Matching.Match;
 using NexusForever.Game.Abstract.Matching.Queue;
 using NexusForever.Game.Abstract.Reputation;
+using NexusForever.Game.Abstract.Trade;
 using NexusForever.Game.Achievement;
 using NexusForever.Game.Character;
 using NexusForever.Game.Chat;
@@ -267,6 +268,7 @@ namespace NexusForever.Game.Entity
         private readonly IEntityFactory entityFactory;
         private readonly IMatchingManager matchingManager;
         private readonly IMatchManager matchManager;
+        private readonly ITradeManager tradeManager;
 
         public Player(
             IMovementManager movementManager,
@@ -274,6 +276,7 @@ namespace NexusForever.Game.Entity
             IEntityFactory entityFactory,
             IMatchingManager matchingManager,
             IMatchManager matchManager,
+            ITradeManager tradeManager,
             ICurrencyManager currencyManager,
             IGuildManager guildManager,
             IResidenceManager residenceManager)
@@ -283,6 +286,7 @@ namespace NexusForever.Game.Entity
             this.entityFactory    = entityFactory;
             this.matchingManager  = matchingManager;
             this.matchManager     = matchManager;
+            this.tradeManager     = tradeManager;
 
             // managers
             CurrencyManager  = currencyManager;
@@ -1032,6 +1036,7 @@ namespace NexusForever.Game.Entity
 
             matchingManager.OnLogout(this);
             matchManager.OnLogout(this);
+            tradeManager.OnLogout(this);
 
             IsOnline = false;
 
