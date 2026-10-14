@@ -515,7 +515,9 @@ namespace NexusForever.Game.Trade
             if (trade.SaveTask.IsCompletedSuccessfully)
             {
                 SendResult(trade, TradeResult.FinishedSuccess, true);
-                log.LogTrace($"Trade between {trade.Initiator.Player.Name} and {trade.Target.Player.Name} completed. {GetManifest(trade)}");
+
+                // Info rather than Trace, it's the only record of items and credits changing hands at default log levels
+                log.LogInformation($"Trade between {trade.Initiator.Player.Name} and {trade.Target.Player.Name} completed. {GetManifest(trade)}");
             }
             else
             {
