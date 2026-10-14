@@ -43,19 +43,19 @@ internal class Program
             .WaitFor(querydb);
 
         builder.AddProject<Projects.NexusForever_AuthServer>("auth-server")
-            .WithNexusForeverTcp(IPAddress.Any, 23115)
+            .WithNexusForeverTcp(IPAddress.Loopback, 23115)
             .WithNexusForeverDatabase("Auth", DatabaseProvider.MySql, authdb.Resource)
             .WaitFor(authdb)
             .WaitForCompletion(dbMigration);
 
         builder.AddProject<Projects.NexusForever_StsServer>("sts-server")
-            .WithNexusForeverTcp(IPAddress.Any, 6600)
+            .WithNexusForeverTcp(IPAddress.Loopback, 6600)
             .WithNexusForeverDatabase("Auth", DatabaseProvider.MySql, authdb.Resource)
             .WaitFor(authdb)
             .WaitForCompletion(dbMigration);
 
         IResourceBuilder<ProjectResource> worldServer = builder.AddProject<Projects.NexusForever_WorldServer>("world-server")
-            .WithNexusForeverTcp(IPAddress.Any, 24000)
+            .WithNexusForeverTcp(IPAddress.Loopback, 24000)
             .WithNexusForeverHttp(5000)
             .WithNexusForeverDatabase("Auth", DatabaseProvider.MySql, authdb.Resource)
             .WithNexusForeverDatabase("Character", DatabaseProvider.MySql, characterdb.Resource)
